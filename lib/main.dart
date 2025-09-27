@@ -247,7 +247,7 @@ class _HistoryPageState extends State<HistoryPage> {
     return ListView.builder(
       itemCount: allTracks.length,
       itemBuilder: (context, index) {
-        final track = allTracks[index];
+        final track = allTracks[allTracks.length - 1 - index];
         final duration = track.end.difference(track.start);
         return ListTile(
           title: Text(track.title),
