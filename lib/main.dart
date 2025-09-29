@@ -80,42 +80,45 @@ class TrackPage extends StatefulWidget {
 class _TrackPageState extends State<TrackPage> {
   final TextEditingController _titleController = TextEditingController();
   String? _selectedTitle;
-  Stopwatch _stopwatch = Stopwatch();
+  DateTime? _runningStart;
   Timer? _timer;
+  bool _isRunning = false;
 
   String get _elapsedTime {
-    final duration = _stopwatch.elapsed;
-    return "${duration.inHours.toString().padLeft(2,'0')}:"
-        "${(duration.inMinutes % 60).toString().padLeft(2,'0')}:"
-        "${(duration.inSeconds % 60).toString().padLeft(2,'0')}";
-  }
+  if (_runningStart == null) return "00:00:00";
+  final duration = DateTime.now().difference(_runningStart!);
+  return "${duration.inHours.toString().padLeft(2,'0')}:"
+         "${(duration.inMinutes % 60).toString().padLeft(2,'0')}:"
+         "${(duration.inSeconds % 60).toString().padLeft(2,'0')}";
+}
 
   void _startStopwatch() {
-    if (!_stopwatch.isRunning) {
-      _stopwatch.start();
-      _timer = Timer.periodic(const Duration(seconds: 1), (_) => setState(() {}));
-    } else {
-      _stopwatch.stop();
-      _timer?.cancel();
-      String title = _selectedTitle ?? _titleController.text;
-      if (title.isEmpty) title = "Untitled";
+  if (!_isRunning) {
+    _runningStart = DateTime.now();
+    _isRunning = true;
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) => setState(() {}));
+  } else {
+    _isRunning = false;
+    _timer?.cancel();
 
-      allTracks.add(Track(
-        title: title,
-        start: DateTime.now().subtract(_stopwatch.elapsed),
-        end: DateTime.now(),
-      ));
+    String title = _selectedTitle ?? _titleController.text;
+    if (title.isEmpty) title = "Untitled";
 
-      // Başlığı dropdown’da en üstte tut
-      allTitles.remove(title);
-      allTitles.insert(0, title);
+    allTracks.add(Track(
+      title: title,
+      start: _runningStart!,
+      end: DateTime.now(),
+    ));
 
-      _stopwatch.reset();
-      _titleController.clear();
-      _selectedTitle = null;
-      setState(() {});
-    }
+    allTitles.remove(title);
+    allTitles.insert(0, title);
+
+    _runningStart = null;
+    _titleController.clear();
+    _selectedTitle = null;
+    setState(() {});
   }
+}
 
   void _removeTitleFromDropdown(String title) {
     setState(() {
@@ -169,7 +172,7 @@ class _TrackPageState extends State<TrackPage> {
       const SizedBox(height: 20),
       ElevatedButton(
         onPressed: _startStopwatch,
-        child: Text(_stopwatch.isRunning ? "Stop" : "Start"),
+        child: Text(_isRunning ? "Stop" : "Start"),
       )
     ],
   ),
